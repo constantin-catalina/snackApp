@@ -17,9 +17,9 @@ def get_all_recipes():
                 ingredient_matches = ingredient_regex.match(ingredient)
                 try:
                     quantities = float(ingredient_matches['quantity'])
-                except ValueError:
+                except ValueError as exc:
                     quantities = None
-                    print(f"Invalid quantity: {ingredient_matches['quantity']}")
+                    print(exc)
                 ingredients.append({
                     'quantity': quantities,
                     'unit': unit if (unit := ingredient_matches['unit']) else None,
