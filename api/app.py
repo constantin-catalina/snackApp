@@ -205,12 +205,12 @@ def delete_recipe(recipe_id):
 def edit_recipe(recipe_id):
     for recipe in recipes:
         if recipe['id'] == recipe_id:
-            recipe['name'] = request.json.get('name')
-            recipe['duration'] = request.json.get('duration')
-            recipe['pictures'] = request.json.get('pictures')
-            recipe['instructions'] = request.json.get('instructions')
-            recipe['ingredients'] = request.json.get('ingredients')
-            recipe['categories'] = request.json.get('categories')
+            recipe['name'] = name if (name:= request.json.get('name')) else recipe['name']
+            recipe['duration'] = duration if (duration:= request.json.get('duration')) else recipe['duration']
+            recipe['pictures'] = pictures if (pictures:= request.json.get('pictures')) else recipe['pictures']
+            recipe['instructions'] = instructions if (instructions:= request.json.get('instructions')) else recipe['instructions']
+            recipe['ingredients'] = ingredients if (ingredients:= request.json.get('ingredients')) else recipe['ingredients']
+            recipe['categories'] = categories if (categories:= request.json.get('categories')) else recipe['categories']
             return jsonify(recipe), 201
     return jsonify({'error': 'Recipe not found'}), 404
 
