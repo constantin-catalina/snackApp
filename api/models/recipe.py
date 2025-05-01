@@ -12,4 +12,17 @@ class Recipe(db.Model):
     instructions = db.Column(db.Text, nullable=False)
 
     #Relationships
-    categories = db.relationship('Category', secondary=recipe_category, backref=db.backref('recipes', lazy='dynamic'))
+    categories = db.relationship(
+        'Category',
+        secondary=recipe_category,
+        backref=db.backref('recipes', lazy='dynamic')
+    )
+
+    def as_dict(self):
+        recipe = {}
+        for col in self.__table__.columns:
+            recipe[col.name] = getattr(self, col.name)
+
+        return recipe
+
+        #return {col.name: getattr(self, col.name) for col in self.__table__.columns}
