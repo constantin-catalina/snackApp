@@ -23,7 +23,19 @@ def hello_world():
 def get_recipes():
     recipes = []
     for recipe in db.session.query(Recipe).all():
-        recipes.append(recipe.as_dict())
+        categories = []
+        for category in recipe.categories:
+            categories.append(category.name)
+
+        recipes_dict = recipe.as_dict()
+        recipes_dict['categories'] = categories
+
+        ingredients = []
+        for ingredient in recipe.ingredients:
+            ingredients.append(ingredient.name)
+        recipes_dict['ingredients'] = ingredients
+
+        recipes.append(recipes_dict)
     return jsonify(recipes)
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['GET'])
@@ -36,6 +48,6 @@ def get_recipe(recipe_id):
 
 if __name__ == '__main__':
     with app.app_context():
-    #     db.drop_all()
+        #db.drop_all()
         db.create_all()
     app.run(debug=True)
