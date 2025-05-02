@@ -81,7 +81,7 @@ def create_recipe():
         categories_list = [item.strip() for item in categories[0].split(',')]
 
         for cat_name in categories_list:
-            category = Category.query.filter_by(name=cat_name).first()
+            category = db.session.query(Category).filter_by(name=cat_name).first()
             if not category:
                 return jsonify({'error': f'Category {cat_name} not found'}), 404
             recipe.categories.append(category)
@@ -144,6 +144,47 @@ def create_category():
     except Exception as exc:
         db.session.rollback()
         return jsonify({'error': f'{exc}'}), 500
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['DELETE'])
+def delete_recipe(recipe_id):
+    recipe = db.session.query(Recipe).filter_by(id=recipe_id).first()
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    for ingredient in recipe.ingredients:
+        db.session.delete(ingredient)
+
+    db.session.delete(recipe)
+    db.session.commit()
+    return jsonify({'success':'recipe deleted successfully'}), 201
+
+@app.route('/api/recipes/<int:recipe_id>', methods=['PUT'])
+def edit_recipe(recipe_id):
+    recipe = db.session.query(Recipe).filter_by(id=recipe_id).first()
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    recipe.name = name if (name:= request.json.get('name')) else recipe.name
+    recipe.duration = duration if (duration:= request.json.get('duration')) else recipe.duration
+    recipe.pictures = pictures if (pictures:= request.json.get('pictures')) else recipe.pictures
+    recipe.instructions = instructions if (instructions:= request.json.get('instructions')) else recipe.instructions
+
+    new_category = request.json.get('categories')
+    if new_category:
+        recipe.categories = []
+        categories_list = [item.strip() for item in new_category[0].split(',')]
+
+        for cat_name in categories_list:
+            category = db.session.query(Category).filter_by(name=cat_name).first()
+            if not category:
+                db.session.rollback()
+                return jsonify({'error': f'Category {cat_name} not found'}), 404
+            recipe.categories.append(category)
+    else:
+        recipe.categories = recipe.categories
+
+    return jsonify({'success':'recipe edited successfully'}), 201
+
 
 if __name__ == '__main__':
     with app.app_context():
