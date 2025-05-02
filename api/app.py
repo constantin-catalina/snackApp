@@ -28,14 +28,21 @@ def get_recipes():
     for recipe in db.session.query(Recipe).all():
         categories = []
         for category in recipe.categories:
-            categories.append(category.name)
+            categories.append({
+                'name': category.name,
+                'color': category.color,
+            })
 
         recipes_dict = recipe.as_dict()
         recipes_dict['categories'] = categories
 
         ingredients = []
         for ingredient in recipe.ingredients:
-            ingredients.append(ingredient.name)
+            ingredients.append({
+                'name': ingredient.name,
+                'quantity': ingredient.quantity,
+                'unit': ingredient.unit
+            })
         recipes_dict['ingredients'] = ingredients
 
         recipes.append(recipes_dict)
