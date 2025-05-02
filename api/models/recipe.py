@@ -21,7 +21,10 @@ class Recipe(db.Model):
     def as_dict(self):
         recipe = {}
         for col in self.__table__.columns:
-            recipe[col.name] = getattr(self, col.name)
+            col_value = getattr(self, col.name)
+            if col.name == 'pictures':
+                col_value = col_value.split(',') if col_value else []
+            recipe[col.name] = col_value
 
         return recipe
 
