@@ -59,7 +59,27 @@ def get_categories():
 def get_recipe(recipe_id):
     for recipe in db.session.query(Recipe).all():
         if recipe.id == recipe_id:
-            return jsonify(recipe.as_dict())
+            categories = []
+            for category in recipe.categories:
+                categories.append({
+                    'name': category.name,
+                    'color': category.color,
+                })
+
+            recipe_dict = recipe.as_dict()
+            recipe_dict['categories'] = categories
+
+            ingredients = []
+            for ingredient in recipe.ingredients:
+                ingredients.append({
+                    'name': ingredient.name,
+                    'quantity': ingredient.quantity,
+                    'unit': ingredient.unit
+                })
+            recipe_dict['ingredients'] = ingredients
+
+            return jsonify(recipe_dict)
+
     return jsonify({'error': 'Recipe not found'}), 404
 
 @app.route('/api/recipes/', methods=['POST'])
@@ -90,7 +110,7 @@ def create_recipe():
         for cat_name in categories_list:
             category = db.session.query(Category).filter_by(name=cat_name).first()
             if not category:
-                return jsonify({'error': f'Category {cat_name} not found'}), 404
+                return jsonify({'error': f'Category {cat_name} not found'}), 400
             recipe.categories.append(category)
 
         db.session.add(recipe)
