@@ -11,6 +11,9 @@ from models.category import Category
 from models.ingredient import Ingredient
 from models.association import recipe_category
 
+import re
+ingredient_regex = re.compile(r'^(?P<quantity>\d+(?:\.\d+)?)\s*(?P<unit>[a-zA-Z]*)\s+(?P<name>.+)$')
+
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
@@ -45,6 +48,65 @@ def get_recipe(recipe_id):
             return jsonify(recipe.as_dict())
     return jsonify({'error': 'Recipe not found'}), 404
 
+@app.route('/api/recipes/', methods=['POST'])
+def create_recipe():
+    try:
+        name = request.json.get('name')
+        duration = request.json.get('duration')
+        pictures = ','.join(request.json.get('pictures'))
+        instructions = request.json.get('instructions')
+        categories = request.json.get('categories')
+        ingredients = request.json.get('ingredients')
+
+        if not name or not duration or not pictures or not instructions or not categories or not ingredients:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        last_recipe_id = db.session.query(Recipe).order_by(Recipe.id.desc()).first()
+        no_of_recipes = last_recipe_id.id if last_recipe_id else 0
+
+        recipe = Recipe (
+            id = no_of_recipes + 1,
+            name=name,
+            duration=duration,
+            pictures=pictures,
+            instructions=instructions
+        )
+        categories_list = [item.strip() for item in categories[0].split(',')]
+
+        for cat_name in categories_list:
+            category = Category.query.filter_by(name=cat_name).first()
+            if not category:
+                return jsonify({'error': f'Category {cat_name} not found'}), 404
+            recipe.categories.append(category)
+
+        db.session.add(recipe)
+        db.session.flush()
+
+        ingredients_list = [item.strip() for item in ingredients[0].split(',')]
+
+        for ingr in ingredients_list:
+            match = ingredient_regex.match(ingr)
+            if not match:
+                return jsonify({'error': f'Invalid ingredient format: {ingr}'}), 400
+            ingr_name = match['name']
+            ingr_quantity = float(match['quantity'])
+            ingr_unit = unit if (unit := match['unit']) else None
+
+            ingredient = Ingredient(
+                name = ingr_name,
+                quantity = ingr_quantity,
+                unit = ingr_unit,
+                recipe_id = recipe.id
+            )
+
+            db.session.add(ingredient)
+
+        db.session.commit()
+        return jsonify({'success': 'Recipe created successfully'}), 201
+
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({'error': f'{exc}'}), 500
 
 if __name__ == '__main__':
     with app.app_context():
