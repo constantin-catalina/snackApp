@@ -41,6 +41,13 @@ def get_recipes():
         recipes.append(recipes_dict)
     return jsonify(recipes)
 
+@app.route('/api/categories', methods=['GET'])
+def get_categories():
+    categories = []
+    for category in db.session.query(Category).all():
+        categories.append(category.as_dict())
+    return jsonify(categories)
+
 @app.route('/api/recipes/<int:recipe_id>', methods=['GET'])
 def get_recipe(recipe_id):
     for recipe in db.session.query(Recipe).all():
@@ -66,10 +73,10 @@ def create_recipe():
 
         recipe = Recipe (
             id = no_of_recipes + 1,
-            name=name,
-            duration=duration,
-            pictures=pictures,
-            instructions=instructions
+            name = name,
+            duration = duration,
+            pictures = pictures,
+            instructions = instructions
         )
         categories_list = [item.strip() for item in categories[0].split(',')]
 
@@ -103,6 +110,36 @@ def create_recipe():
 
         db.session.commit()
         return jsonify({'success': 'Recipe created successfully'}), 201
+
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({'error': f'{exc}'}), 500
+
+@app.route('/api/categories', methods=['POST'])
+def create_category():
+    try:
+        name = request.json.get('name')
+        color = request.json.get('color')
+
+        if not name or not color:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        for category in db.session.query(Category).all():
+            if category.name == name:
+                return jsonify({'error': f'Category {name} already exists'}), 400
+
+        last_category_id = db.session.query(Category).order_by(Category.id.desc()).first()
+        no_of_categories = last_category_id.id if last_category_id else 0
+
+        category = Category(
+            id = no_of_categories + 1,
+            name = name,
+            color = color
+        )
+
+        db.session.add(category)
+        db.session.commit()
+        return jsonify({'success': 'Category created successfully'}), 201
 
     except Exception as exc:
         db.session.rollback()
