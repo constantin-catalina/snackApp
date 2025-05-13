@@ -26,26 +26,7 @@ def hello_world():
 def get_recipes():
     recipes = []
     for recipe in db.session.query(Recipe).all():
-        categories = []
-        for category in recipe.categories:
-            categories.append({
-                'name': category.name,
-                'color': category.color,
-            })
-
-        recipes_dict = recipe.as_dict()
-        recipes_dict['categories'] = categories
-
-        ingredients = []
-        for ingredient in recipe.ingredients:
-            ingredients.append({
-                'name': ingredient.name,
-                'quantity': ingredient.quantity,
-                'unit': ingredient.unit
-            })
-        recipes_dict['ingredients'] = ingredients
-
-        recipes.append(recipes_dict)
+        recipes.append(recipe.as_dict())
     return jsonify(recipes)
 
 @app.route('/api/categories', methods=['GET'])
@@ -57,30 +38,10 @@ def get_categories():
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['GET'])
 def get_recipe(recipe_id):
-    for recipe in db.session.query(Recipe).all():
-        if recipe.id == recipe_id:
-            categories = []
-            for category in recipe.categories:
-                categories.append({
-                    'name': category.name,
-                    'color': category.color,
-                })
-
-            recipe_dict = recipe.as_dict()
-            recipe_dict['categories'] = categories
-
-            ingredients = []
-            for ingredient in recipe.ingredients:
-                ingredients.append({
-                    'name': ingredient.name,
-                    'quantity': ingredient.quantity,
-                    'unit': ingredient.unit
-                })
-            recipe_dict['ingredients'] = ingredients
-
-            return jsonify(recipe_dict)
-
-    return jsonify({'error': 'Recipe not found'}), 404
+    recipe = db.session.query(Recipe).get(recipe_id)
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+    return jsonify(recipe.as_dict())
 
 @app.route('/api/recipes/', methods=['POST'])
 def create_recipe():
@@ -95,22 +56,21 @@ def create_recipe():
         if not name or not duration or not pictures or not instructions or not categories or not ingredients:
             return jsonify({'error': 'Missing required fields'}), 400
 
-        last_recipe_id = db.session.query(Recipe).order_by(Recipe.id.desc()).first()
-        no_of_recipes = last_recipe_id.id if last_recipe_id else 0
-
         recipe = Recipe (
-            id = no_of_recipes + 1,
             name = name,
             duration = duration,
             pictures = pictures,
             instructions = instructions
         )
-        categories_list = [item.strip() for item in categories[0].split(',')]
 
-        for cat_name in categories_list:
+        for cat in categories:
+            cat_name = cat.get('name')
+            if not cat_name:
+                return jsonify({'error': 'Missing category name'}), 400
             category = db.session.query(Category).filter_by(name=cat_name).first()
             if not category:
-                return jsonify({'error': f'Category {cat_name} not found'}), 400
+                db.session.rollback()
+                return jsonify({'error': f'Category {cat_name} not found'}), 404
             recipe.categories.append(category)
 
         db.session.add(recipe)
@@ -121,6 +81,7 @@ def create_recipe():
         for ingr in ingredients_list:
             match = ingredient_regex.match(ingr)
             if not match:
+                db.session.rollback()
                 return jsonify({'error': f'Invalid ingredient format: {ingr}'}), 400
             ingr_name = match['name']
             ingr_quantity = float(match['quantity'])
@@ -155,11 +116,7 @@ def create_category():
             if category.name == name:
                 return jsonify({'error': f'Category {name} already exists'}), 400
 
-        last_category_id = db.session.query(Category).order_by(Category.id.desc()).first()
-        no_of_categories = last_category_id.id if last_category_id else 0
-
         category = Category(
-            id = no_of_categories + 1,
             name = name,
             color = color
         )

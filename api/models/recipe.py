@@ -26,6 +26,25 @@ class Recipe(db.Model):
                 col_value = col_value.split(',') if col_value else []
             recipe[col.name] = col_value
 
+        categories = []
+        for category  in self.categories:
+            category_dict = {
+                'name': category .name,
+                'color': category .color
+            }
+            categories.append(category_dict)
+        recipe['categories'] = categories
+
+        ingredients = []
+        for ingredient in self.ingredients:
+            ingredient_dict = {
+                'name': ingredient.name,
+                'quantity': ingredient.quantity,
+                'unit': ingredient.unit
+            }
+            ingredients.append(ingredient_dict)
+        recipe['ingredients'] = ingredients
+
         return recipe
 
         #return {col.name: getattr(self, col.name) for col in self.__table__.columns}
