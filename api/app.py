@@ -12,15 +12,18 @@ from models.ingredient import Ingredient
 from models.association import recipe_category
 
 import re
+
 ingredient_regex = re.compile(r'^(?P<quantity>\d+(?:\.\d+)?)\s*(?P<unit>[a-zA-Z]*)\s+(?P<name>.+)$')
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+
 @app.route('/')
 def hello_world():
     return 'Welcome to my snack app!'
+
 
 @app.route('/api/recipes', methods=['GET'])
 def get_recipes():
@@ -29,6 +32,7 @@ def get_recipes():
         recipes.append(recipe.as_dict())
     return jsonify(recipes)
 
+
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
     categories = []
@@ -36,12 +40,14 @@ def get_categories():
         categories.append(category.as_dict())
     return jsonify(categories)
 
+
 @app.route('/api/recipes/<int:recipe_id>', methods=['GET'])
 def get_recipe(recipe_id):
     recipe = db.session.query(Recipe).get(recipe_id)
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
     return jsonify(recipe.as_dict())
+
 
 @app.route('/api/recipes/', methods=['POST'])
 def create_recipe():
@@ -56,11 +62,11 @@ def create_recipe():
         if not name or not duration or not pictures or not instructions or not categories or not ingredients:
             return jsonify({'error': 'Missing required fields'}), 400
 
-        recipe = Recipe (
-            name = name,
-            duration = duration,
-            pictures = pictures,
-            instructions = instructions
+        recipe = Recipe(
+            name=name,
+            duration=duration,
+            pictures=pictures,
+            instructions=instructions
         )
 
         for cat in categories:
@@ -88,10 +94,10 @@ def create_recipe():
             ingr_unit = unit if (unit := match['unit']) else None
 
             ingredient = Ingredient(
-                name = ingr_name,
-                quantity = ingr_quantity,
-                unit = ingr_unit,
-                recipe_id = recipe.id
+                name=ingr_name,
+                quantity=ingr_quantity,
+                unit=ingr_unit,
+                recipe_id=recipe.id
             )
 
             db.session.add(ingredient)
@@ -102,6 +108,7 @@ def create_recipe():
     except Exception as exc:
         db.session.rollback()
         return jsonify({'error': f'{exc}'}), 500
+
 
 @app.route('/api/categories', methods=['POST'])
 def create_category():
@@ -117,8 +124,8 @@ def create_category():
                 return jsonify({'error': f'Category {name} already exists'}), 400
 
         category = Category(
-            name = name,
-            color = color
+            name=name,
+            color=color
         )
 
         db.session.add(category)
@@ -128,6 +135,7 @@ def create_category():
     except Exception as exc:
         db.session.rollback()
         return jsonify({'error': f'{exc}'}), 500
+
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['DELETE'])
 def delete_recipe(recipe_id):
@@ -140,7 +148,8 @@ def delete_recipe(recipe_id):
 
     db.session.delete(recipe)
     db.session.commit()
-    return jsonify({'success':'recipe deleted successfully'}), 201
+    return jsonify({'success': 'recipe deleted successfully'}), 201
+
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['PUT'])
 def edit_recipe(recipe_id):
@@ -148,10 +157,10 @@ def edit_recipe(recipe_id):
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
 
-    recipe.name = name if (name:= request.json.get('name')) else recipe.name
-    recipe.duration = duration if (duration:= request.json.get('duration')) else recipe.duration
-    recipe.pictures = pictures if (pictures:= request.json.get('pictures')) else recipe.pictures
-    recipe.instructions = instructions if (instructions:= request.json.get('instructions')) else recipe.instructions
+    recipe.name = name if (name := request.json.get('name')) else recipe.name
+    recipe.duration = duration if (duration := request.json.get('duration')) else recipe.duration
+    recipe.pictures = pictures if (pictures := request.json.get('pictures')) else recipe.pictures
+    recipe.instructions = instructions if (instructions := request.json.get('instructions')) else recipe.instructions
 
     new_category = request.json.get('categories')
     if new_category:
@@ -167,11 +176,11 @@ def edit_recipe(recipe_id):
     else:
         recipe.categories = recipe.categories
 
-    return jsonify({'success':'recipe edited successfully'}), 201
+    return jsonify({'success': 'recipe edited successfully'}), 201
 
 
 if __name__ == '__main__':
     with app.app_context():
-        #db.drop_all()
+        # db.drop_all()
         db.create_all()
     app.run(debug=True)

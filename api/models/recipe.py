@@ -2,6 +2,7 @@ from models import db
 from models.association import recipe_category
 from models.category import Category
 
+
 class Recipe(db.Model):
     __tablename__ = 'recipe'
 
@@ -11,7 +12,7 @@ class Recipe(db.Model):
     pictures = db.Column(db.Text, nullable=False)
     instructions = db.Column(db.Text, nullable=False)
 
-    #Relationships
+    # Relationships
     categories = db.relationship(
         'Category',
         secondary=recipe_category,
@@ -27,10 +28,10 @@ class Recipe(db.Model):
             recipe[col.name] = col_value
 
         categories = []
-        for category  in self.categories:
+        for category in self.categories:
             category_dict = {
-                'name': category .name,
-                'color': category .color
+                'name': category.name,
+                'color': category.color
             }
             categories.append(category_dict)
         recipe['categories'] = categories
@@ -47,4 +48,4 @@ class Recipe(db.Model):
 
         return recipe
 
-        #return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+        # return {col.name: getattr(self, col.name) for col in self.__table__.columns}
