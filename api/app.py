@@ -11,10 +11,6 @@ from models.category import Category
 from models.ingredient import Ingredient
 from models.association import recipe_category
 
-import re
-
-ingredient_regex = re.compile(r'^(?P<quantity>\d+(?:\.\d+)?)\s*(?P<unit>[a-zA-Z]*)\s+(?P<name>.+)$')
-
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
@@ -82,16 +78,14 @@ def create_recipe():
         db.session.add(recipe)
         db.session.flush()
 
-        ingredients_list = [item.strip() for item in ingredients[0].split(',')]
+        for ingr in ingredients:
+            ingr_name = ingr.get('name')
+            ingr_quantity = ingr.get('quantity')
+            ingr_unit = ingr.get('unit')
 
-        for ingr in ingredients_list:
-            match = ingredient_regex.match(ingr)
-            if not match:
+            if not ingr_name or ingr_quantity is None:
                 db.session.rollback()
-                return jsonify({'error': f'Invalid ingredient format: {ingr}'}), 400
-            ingr_name = match['name']
-            ingr_quantity = float(match['quantity'])
-            ingr_unit = unit if (unit := match['unit']) else None
+                return jsonify({'error': 'Missing ingredient fields'}), 400
 
             ingredient = Ingredient(
                 name=ingr_name,
@@ -157,26 +151,55 @@ def edit_recipe(recipe_id):
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
 
-    recipe.name = name if (name := request.json.get('name')) else recipe.name
-    recipe.duration = duration if (duration := request.json.get('duration')) else recipe.duration
-    recipe.pictures = pictures if (pictures := request.json.get('pictures')) else recipe.pictures
-    recipe.instructions = instructions if (instructions := request.json.get('instructions')) else recipe.instructions
+    try:
+        recipe.name = name if (name := request.json.get('name')) else recipe.name
+        recipe.duration = duration if (duration := request.json.get('duration')) else recipe.duration
+        recipe.pictures = pictures if (pictures := request.json.get('pictures')) else recipe.pictures
+        recipe.instructions = instructions if (
+            instructions := request.json.get('instructions')) else recipe.instructions
 
-    new_category = request.json.get('categories')
-    if new_category:
-        recipe.categories = []
-        categories_list = [item.strip() for item in new_category[0].split(',')]
+        new_categories = request.json.get('categories')
+        if new_categories:
+            recipe.categories = []
+            for cat in new_categories:
+                cat_name = cat.get('name')
+                if not cat_name:
+                    db.session.rollback()
+                    return jsonify({'error': 'Missing category name'}), 400
+                category = db.session.query(Category).filter_by(name=cat_name).first()
+                if not category:
+                    db.session.rollback()
+                    return jsonify({'error': f'Category {cat_name} not found'}), 404
+                recipe.categories.append(category)
 
-        for cat_name in categories_list:
-            category = db.session.query(Category).filter_by(name=cat_name).first()
-            if not category:
-                db.session.rollback()
-                return jsonify({'error': f'Category {cat_name} not found'}), 404
-            recipe.categories.append(category)
-    else:
-        recipe.categories = recipe.categories
+        new_ingredients = request.json.get('ingredients')
+        if new_ingredients:
+            for ingr in recipe.ingredients:
+                db.session.delete(ingr)
 
-    return jsonify({'success': 'recipe edited successfully'}), 201
+            for ingr in new_ingredients:
+                ingr_name = ingr.get('name')
+                ingr_quantity = ingr.get('quantity')
+                ingr_unit = ingr.get('unit')
+
+                if not ingr_name or ingr_quantity is None:
+                    db.session.rollback()
+                    return jsonify({'error': 'Missing ingredient fields'}), 400
+
+                ingredient = Ingredient(
+                    name=ingr_name,
+                    quantity=ingr_quantity,
+                    unit=ingr_unit,
+                    recipe_id=recipe.id
+                )
+                db.session.add(ingredient)
+
+        db.session.commit()
+        return jsonify({'success': 'Recipe edited successfully'}), 200
+
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({'error': f'{exc}'}), 500
 
 
 if __name__ == '__main__':
