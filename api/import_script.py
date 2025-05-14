@@ -14,6 +14,7 @@ CATEGORY_COLORS = {
     'No-bake': '#ADD8E6'  # lightblue
 }
 
+
 def get_all_recipes():
     # Regex to match the ingredient format
     ingredient_regex = re.compile(r'^(?P<quantity>\d+)(?P<unit>[a-zA-Z]*) (?P<name>.+)$')
@@ -72,7 +73,6 @@ def populate_db(recipes):
 
                 # Add ingredients
                 for ing in recipe_data['Ingredients']:
-
                     ingredient = Ingredient(
                         name=ing['name'],
                         quantity=ing['quantity'],
