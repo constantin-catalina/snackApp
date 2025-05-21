@@ -10,6 +10,7 @@ from models.recipe import Recipe
 from models.category import Category
 from models.ingredient import Ingredient
 from models.association import recipe_category
+from import_script import get_all_recipes, populate_db
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -72,7 +73,7 @@ def create_recipe():
             category = db.session.query(Category).filter_by(name=cat_name).first()
             if not category:
                 db.session.rollback()
-                return jsonify({'error': f'Category {cat_name} not found'}), 404
+                return jsonify({'error': f'Category {cat_name} not found'}), 400
             recipe.categories.append(category)
 
         db.session.add(recipe)
@@ -133,16 +134,20 @@ def create_category():
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['DELETE'])
 def delete_recipe(recipe_id):
-    recipe = db.session.query(Recipe).filter_by(id=recipe_id).first()
-    if not recipe:
-        return jsonify({'error': 'Recipe not found'}), 404
+    try:
+        recipe = db.session.query(Recipe).filter_by(id=recipe_id).first()
+        if not recipe:
+            return jsonify({'error': 'Recipe not found'}), 404
 
-    for ingredient in recipe.ingredients:
-        db.session.delete(ingredient)
+        for ingredient in recipe.ingredients:
+            db.session.delete(ingredient)
 
-    db.session.delete(recipe)
-    db.session.commit()
-    return jsonify({'success': 'recipe deleted successfully'}), 201
+        db.session.delete(recipe)
+        db.session.commit()
+        return jsonify({'success': 'recipe deleted successfully'}), 204
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({'error': f'something went wrong: {exc}'}), 500
 
 
 @app.route('/api/recipes/<int:recipe_id>', methods=['PUT'])
@@ -169,7 +174,7 @@ def edit_recipe(recipe_id):
                 category = db.session.query(Category).filter_by(name=cat_name).first()
                 if not category:
                     db.session.rollback()
-                    return jsonify({'error': f'Category {cat_name} not found'}), 404
+                    return jsonify({'error': f'Category {cat_name} not found'}), 400
                 recipe.categories.append(category)
 
         new_ingredients = request.json.get('ingredients')
@@ -195,7 +200,7 @@ def edit_recipe(recipe_id):
                 db.session.add(ingredient)
 
         db.session.commit()
-        return jsonify({'success': 'Recipe edited successfully'}), 200
+        return jsonify({'success': 'Recipe edited successfully'}), 201
 
     except Exception as exc:
         db.session.rollback()
@@ -203,7 +208,11 @@ def edit_recipe(recipe_id):
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        # db.drop_all()
-        db.create_all()
-    app.run(debug=True)
+    # with app.app_context():
+    #     db.drop_all()
+    #     db.create_all()
+    #
+    # # Use the following line if you want to populate the database with sample data
+    # populate_db(get_all_recipes(), app, db)
+
+    app.run(host="0.0.0.0")
