@@ -2,6 +2,7 @@ from models import db
 from models.association import recipe_category
 from models.category import Category
 
+
 class Recipe(db.Model):
     __tablename__ = 'recipe'
 
@@ -11,7 +12,7 @@ class Recipe(db.Model):
     pictures = db.Column(db.Text, nullable=False)
     instructions = db.Column(db.Text, nullable=False)
 
-    #Relationships
+    # Relationships
     categories = db.relationship(
         'Category',
         secondary=recipe_category,
@@ -21,8 +22,30 @@ class Recipe(db.Model):
     def as_dict(self):
         recipe = {}
         for col in self.__table__.columns:
-            recipe[col.name] = getattr(self, col.name)
+            col_value = getattr(self, col.name)
+            if col.name == 'pictures':
+                col_value = col_value.split(',') if col_value else []
+            recipe[col.name] = col_value
+
+        categories = []
+        for category in self.categories:
+            category_dict = {
+                'name': category.name,
+                'color': category.color
+            }
+            categories.append(category_dict)
+        recipe['categories'] = categories
+
+        ingredients = []
+        for ingredient in self.ingredients:
+            ingredient_dict = {
+                'name': ingredient.name,
+                'quantity': ingredient.quantity,
+                'unit': ingredient.unit
+            }
+            ingredients.append(ingredient_dict)
+        recipe['ingredients'] = ingredients
 
         return recipe
 
-        #return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+        # return {col.name: getattr(self, col.name) for col in self.__table__.columns}
