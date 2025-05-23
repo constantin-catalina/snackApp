@@ -98,7 +98,7 @@ def create_recipe():
             db.session.add(ingredient)
 
         db.session.commit()
-        return jsonify({'success': 'Recipe created successfully'}), 201
+        return jsonify(recipe.as_dict()), 201
 
     except Exception as exc:
         db.session.rollback()
@@ -125,7 +125,7 @@ def create_category():
 
         db.session.add(category)
         db.session.commit()
-        return jsonify({'success': 'Category created successfully'}), 201
+        return jsonify(category.as_dict()), 201
 
     except Exception as exc:
         db.session.rollback()
@@ -200,7 +200,7 @@ def edit_recipe(recipe_id):
                 db.session.add(ingredient)
 
         db.session.commit()
-        return jsonify({'success': 'Recipe edited successfully'}), 201
+        return jsonify(recipe.as_dict()), 201
 
     except Exception as exc:
         db.session.rollback()
