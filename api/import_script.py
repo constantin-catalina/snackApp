@@ -1,7 +1,7 @@
 import csv
 import re
 import json
-from app import app, db
+
 from models.category import Category
 from models.ingredient import Ingredient
 from models.recipe import Recipe
@@ -30,8 +30,13 @@ def get_all_recipes():
             ingredients = []
             for ingredient in row['Ingredients']:
                 ingredient_matches = ingredient_regex.match(ingredient)
+                try:
+                    quantity = float(ingredient_matches['quantity'])
+                except ValueError as exc:
+                    print(f'Error converting quantity to float: {exc}')
+                    quantity = None
                 ingredients.append({
-                    'quantity': ingredient_matches['quantity'],
+                    'quantity': quantity,
                     'unit': unit if (unit := ingredient_matches['unit']) else None,
                     'name': ingredient_matches['name'],
                 })
@@ -42,7 +47,7 @@ def get_all_recipes():
     return recipes
 
 
-def populate_db(recipes):
+def populate_db(recipes, app, db):
     # Start app context to access DB
     with app.app_context():
         try:
@@ -55,7 +60,7 @@ def populate_db(recipes):
                     if not category:
                         category = Category(
                             name=cat_name,
-                            color=CATEGORY_COLORS.get(cat_name, '#848482')  # Default to gray in hex
+                            color=CATEGORY_COLORS.get(cat_name, '#848482'),  # Default to gray in hex
                         )
                         db.session.add(category)
                     category_objs.append(category)
@@ -66,7 +71,7 @@ def populate_db(recipes):
                     duration=recipe_data['Duration'],
                     pictures=','.join(recipe_data['Pictures']),
                     instructions=recipe_data['Instructions'],
-                    categories=category_objs
+                    categories=category_objs,
                 )
                 db.session.add(recipe)
                 db.session.flush()  # Ensure recipe.id is available
@@ -77,7 +82,7 @@ def populate_db(recipes):
                         name=ing['name'],
                         quantity=ing['quantity'],
                         unit=ing['unit'],
-                        recipe_id=recipe.id
+                        recipe_id=recipe.id,
                     )
                     db.session.add(ingredient)
 
@@ -89,8 +94,3 @@ def populate_db(recipes):
         except Exception as exc:
             db.session.rollback()
             print('Error during population:', exc)
-
-
-if __name__ == '__main__':
-    all_recipes = get_all_recipes()
-    populate_db(all_recipes)
