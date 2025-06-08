@@ -1,0 +1,39 @@
+.recipes-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+
+  .recipe-title {
+    font-size: 2rem;
+    text-transform: capitalize;
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+
+    a {
+      color: var(--primary-color);
+    }
+  }
+}
+
+.recipe-duration {
+  display: flex;
+  gap: 0.5rem;
+  margin: auto 0;
+
+  img {
+    aspect-ratio: 1;
+    width: 1rem;
+  }
+}

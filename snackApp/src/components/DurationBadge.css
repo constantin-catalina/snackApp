@@ -1,0 +1,10 @@
+.recipe-duration {
+  display: flex;
+  gap: 0.5rem;
+  margin: auto 0;
+
+  img {
+    aspect-ratio: 1;
+    width: 1rem;
+  }
+}

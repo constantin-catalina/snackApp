@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 
+from flask_cors import CORS
+
 load_dotenv()
 
 from config import Config
@@ -16,6 +18,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+CORS(app, origins=[Config.APP_URL or '*'])
 
 @app.route('/')
 def hello_world():
