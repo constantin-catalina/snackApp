@@ -13,3 +13,5 @@ class Config:
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    APP_URL = os.getenv('APP_URL')

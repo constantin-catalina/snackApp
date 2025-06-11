@@ -1,0 +1,13 @@
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    div.logo {
+        font-size: 2rem;
+    }
+
+    button {
+        color: white;
+    }
+}
