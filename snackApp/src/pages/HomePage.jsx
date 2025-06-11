@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react'
+import { Link } from 'react-router';
 
 import {Card} from 'react-bootstrap';
 import './HomePage.css'
@@ -29,16 +30,22 @@ export function HomePage() {
                 {
                     recipes.map((recipe) => {
                         return (
-                            <Card key={`recipe-${recipe.id}`}>
-                                <Card.Img src={recipe.pictures[0]} height={300}/>
-                                <Card.Body>
-                                    <Card.Title>
-                                        {recipe.name}
-                                    </Card.Title>
-                                    <CategoryList categories={recipe.categories} />
-                                    <DurationBadge duration={recipe.duration} />
-                                </Card.Body>
-                            </Card>
+                            <Link
+                                key={`recipe-${recipe.id}`}
+                                to={`/recipes/${recipe.id}`}
+                            >
+                                <Card>
+                                    <Card.Img src={recipe.pictures[0]} height={300}/>
+                                    <Card.Body>
+                                        <Card.Title>
+                                            {recipe.name}
+                                        </Card.Title>
+                                        <CategoryList categories={recipe.categories} />
+                                        <DurationBadge duration={recipe.duration} />
+                                    </Card.Body>
+                                </Card>
+                            </Link>
+                            
                         );
                     })
                 }
