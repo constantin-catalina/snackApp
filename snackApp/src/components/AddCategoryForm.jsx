@@ -1,7 +1,7 @@
 import {Modal, Form, FormGroup, FormControl} from 'react-bootstrap';
 import {useState} from 'react';
 
-export function AddCategoryModal(props){
+export function AddCategoryForm(props){
 
     const [name, setName] = useState('');
     const [color, setColor] = useState('');

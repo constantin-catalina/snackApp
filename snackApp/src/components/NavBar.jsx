@@ -1,15 +1,21 @@
-import './NavBar.css'
+import './Navbar.css';
 
-export function NavBar (props) {
+function Navbar(props) {
     return (
         <nav>
-            <div>
-                FullSnack
+            <div className="logo">
+                <a href="/">FullSnack</a>
             </div>
-            <div>
-                <button onClick={() => props.handleOpenCategoryModal()}>+ Add category</button>
-                <button>+ Add recipe</button>
+            <div className="buttons">
+              <button onClick={props.onAddCategory}>
+                + Add category
+              </button>
+              <button onClick={props.onAddRecipe}>
+                  + Add recipe
+              </button>
             </div>
         </nav>
-    )
+    );
 }
+
+export { Navbar };
